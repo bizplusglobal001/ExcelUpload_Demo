@@ -1,6 +1,7 @@
 package com.helper;
 
 
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
@@ -74,27 +75,30 @@ public class ExcelHelper {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> List<T> readData(String classname) throws Exception {
         initializeForRead();
-        Sheet sheet = getSheetWithName(classname);
-        Class clazz = Class.forName(workbook.getSheetName(0));
+        Sheet sheet = getSheetWithName("dateSheet");
+        Class clazz = Class.forName(classname);
+
         setupFieldForClass(clazz);
         List<T> result = new ArrayList<T>();
         Row row;
-        for (int rowCount = 1; rowCount < 4; rowCount++) {
+        for (int rowCount = 1; rowCount <= sheet.getLastRowNum(); rowCount++) {
             T one = (T) clazz.newInstance();
+
             row = sheet.getRow(rowCount);
-            int colCount = 0;
-            result.add(one);
-            for (Cell cell : row) {
-                int type = cell.getCellType();
+            int colCount = 1;
+
+            for (int i = 1; i < row.getLastCellNum(); i++) {
+
+                int type = row.getCell(i).getCellType();
+
                 String fieldName = fieldNames.get(colCount++);
+
                 Method method = constructMethod(clazz, fieldName);
                 if (type == Cell.CELL_TYPE_STRING) {
-                    String value = cell.getStringCellValue();
-                    Object[] values = new Object[1];
-                    values[0] = value;
-                    method.invoke(one, values);
+                    String value = row.getCell(i).getStringCellValue();
+                    method.invoke(one, value);
                 } else if (type == Cell.CELL_TYPE_NUMERIC) {
-                    Double num = cell.getNumericCellValue();
+                    Double num = row.getCell(i).getNumericCellValue();
                     Class<?> returnType = getGetterReturnClass(clazz, fieldName);
                     if (returnType == int.class || returnType == Integer.class) {
                         method.invoke(one, num.intValue());
@@ -105,16 +109,17 @@ public class ExcelHelper {
                     } else if (returnType == long.class || returnType == Long.class) {
                         method.invoke(one, num.intValue());
                     } else if (returnType == Date.class) {
-                        Date date = HSSFDateUtil.getJavaDate(cell.getNumericCellValue());
+                        Date date = HSSFDateUtil.getJavaDate(row.getCell(i).getNumericCellValue());
                         method.invoke(one, date);
                     }
                 } else if (type == Cell.CELL_TYPE_BOOLEAN) {
-                    boolean num = cell.getBooleanCellValue();
+                    boolean num = row.getCell(i).getBooleanCellValue();
                     Object[] values = new Object[1];
                     values[0] = num;
                     method.invoke(one, values);
                 }
             }
+            result.add(one);
         }
         return result;
     }
@@ -208,5 +213,7 @@ public class ExcelHelper {
         String capital = string.substring(0, 1).toUpperCase();
         return capital + string.substring(1);
     }
+
+
 
 }

@@ -45,6 +45,8 @@ public class ProductController extends HttpServlet {
                 String excelFileName = uploadFile(request);
                 String applicationPath = request.getServletContext().getRealPath("");
                 String basePath = applicationPath + "assets" + File.separator;
+                System.out.println(applicationPath);
+
                 ExcelHelper excelHelper = new ExcelHelper(basePath + excelFileName);
                 List<Product> productList = excelHelper.readData(Product.class.getName());
                 for (Product product : productList) {
@@ -53,6 +55,7 @@ public class ProductController extends HttpServlet {
                 request.setAttribute("products", productList);
                 request.getRequestDispatcher("index.jsp").forward(request, response);
             }catch (Exception e) {
+                e.printStackTrace();
                 request.setAttribute("error", "Can't import excel file");
                 request.getRequestDispatcher("index.jsp").forward(request, response);
             }
